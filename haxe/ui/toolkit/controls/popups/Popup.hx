@@ -1,5 +1,7 @@
 package haxe.ui.toolkit.controls.popups;
 
+import haxe.ui.toolkit.core.Root;
+import haxe.ui.toolkit.core.RootManager;
 import openfl.events.MouseEvent;
 import haxe.ui.toolkit.containers.Box;
 import haxe.ui.toolkit.containers.HBox;
@@ -162,6 +164,14 @@ class Popup extends VBox implements IDraggable {
 	public var config(get, null):Dynamic;
 	private function get_config():Dynamic {
 		return _config;
+	}
+	
+	public var tempRoot(null, set):Root = null;
+	private function set_tempRoot(r:Root):Root
+	{
+		if (tempRoot != null && r == null)
+			RootManager.instance.destroyRoot(tempRoot);
+		return tempRoot = r;			
 	}
 	
 	//******************************************************************************************

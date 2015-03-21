@@ -14,6 +14,7 @@ import haxe.ui.toolkit.data.ArrayDataSource;
 import haxe.ui.toolkit.data.IDataSource;
 import motion.Actuate;
 import motion.easing.Linear;
+import openfl.display.Stage;
 import openfl.events.KeyboardEvent;
 import openfl.Lib;
 import openfl.ui.Keyboard;
@@ -154,22 +155,21 @@ class PopupManager {
 		_modalPopups.remove(p);
 		if (_modalPopups.length == 0)
 			Lib.current.stage.removeEventListener(KeyboardEvent.KEY_DOWN, onKeyPress);
-		
 		var transition:String = Toolkit.getTransitionForClass(Popup);
-		if (transition == "slide") {
-			Actuate.tween(p, .2, { y: p.root.height }, true).ease(Linear.easeNone).onComplete(function() {
-				p.root.removeChild(p, dispose);
-				p.root.hideModalOverlay();
-			});
-		} else if (transition == "fade") {
-			Actuate.tween(p.sprite, .2, { alpha: 0 }, true).ease(Linear.easeNone).onComplete(function() {
-				p.root.removeChild(p, dispose);
-				p.root.hideModalOverlay();
-			});
-		} else {
-			p.root.removeChild(p, dispose);
-			p.root.hideModalOverlay();
-		}
+		if (transition == "slide")
+			Actuate.tween(p, .2, { y: p.root.height }, true).ease(Linear.easeNone).onComplete(onHidePopup, [p, dispose]);
+		else if (transition == "fade")
+			Actuate.tween(p.sprite, .2, { alpha: 0 }, true).ease(Linear.easeNone).onComplete(onHidePopup, [p, dispose]);
+		else
+			onHidePopup(p, dispose);
+	}
+	
+	private function onHidePopup(p:Popup, dispose:Bool) 
+	{
+		p.root.removeChild(p, dispose);
+		p.root.hideModalOverlay();
+		if (dispose)
+			p.tempRoot = null;
 	}
 	
 	public function centerPopup(p:Popup):Void {
@@ -193,7 +193,10 @@ class PopupManager {
 			title = PopupManager.instance.defaultTitle;
 		}
 		var p:Popup = new Popup(title, content, config, fn);
-		p.root = config.root;
+		if (Std.is(config.root, Stage))
+			p.root = p.tempRoot = Toolkit.openPopup( { x:0, y:0, percentWidth:100, percentHeight:100, parent:config.root } );
+		else
+			p.root = config.root;
 		p.visible = false;
 		
 		return p;

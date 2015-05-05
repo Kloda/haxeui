@@ -40,21 +40,12 @@ class PopupManager {
 	}
 	
 	private function onKeyPress(e:KeyboardEvent):Void {
-		if (_modalPopups.length == 0)
-			return;
-		var p = _modalPopups.first();	// Get latest
-		if (p.config.dismiss != null) {
-			if (e.keyCode == Keyboard.ESCAPE && p.config.dismiss == Dismiss.ESCAPE) {
-				e.stopImmediatePropagation(); //Needed on Windows (and maybe other platforms) to prevent popups created in callbacks of other popups to be dismissed immediatly. Since the listener is removed and immediatly added it would apparently catch the same event again.
-				dismissModal(Dismiss.ESCAPE | Dismiss.ANYKEY);
-			} else if (e.keyCode == Keyboard.ENTER && p.config.dismiss == Dismiss.ENTER) {
-				e.stopImmediatePropagation(); //Needed on Windows (and maybe other platforms) to prevent popups created in callbacks of other popups to be dismissed immediatly. Since the listener is removed and immediatly added it would apparently catch the same event again.
-				dismissModal(Dismiss.ENTER | Dismiss.ANYKEY);
-			} else if (p.config.dismiss == Dismiss.ANYKEY) {
-				e.stopImmediatePropagation(); //Needed on Windows (and maybe other platforms) to prevent popups created in callbacks of other popups to be dismissed immediatly. Since the listener is removed and immediatly added it would apparently catch the same event again.
-				dismissModal(Dismiss.ANYKEY);
-			}
-		}
+		var action = Dismiss.ANYKEY;
+		if (e.keyCode == Keyboard.ESCAPE)
+			action |= Dismiss.ESCAPE;
+		else if (e.keyCode == Keyboard.ENTER)
+			action |= Dismiss.ENTER;
+		dismissModal(action, e);
 	}
 	
 	public function showSimple(text:String, title:String = null, config:Dynamic = PopupButton.OK, fn:Dynamic->Void = null):Popup {
@@ -187,11 +178,13 @@ class PopupManager {
 		p.y = Std.int((p.root.height / 2) - (p.height / 2));
 	}
 	
-	public function dismissModal(action:Int) {
+	public function dismissModal(action:Int, e:KeyboardEvent = null) {
 		if (_modalPopups.length == 0)
 			return;
 		var p = _modalPopups.first();	//Try to close latest added popup
 		if (p.config.dismiss != null && (p.config.dismiss & action > 0)) {
+			if (e != null)
+				e.stopImmediatePropagation(); //Needed on Windows (and maybe other platforms) to prevent popups created in callbacks of other popups to be dismissed immediatly. Since the listener is removed and immediatly added it would apparently catch the same event again.
 			hidePopup(p);
 			p.callClosingCallback(PopupButton.CANCEL);
 		}
